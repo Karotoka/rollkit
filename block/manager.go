@@ -607,6 +607,9 @@ func (m *Manager) publishBlock(ctx context.Context) error {
 		block = m.createBlock(newHeight, lastCommit, lastHeaderHash)
 		m.logger.Debug("block info", "num_tx", len(block.Data.Txs))
 
+		// TODO: needs updateState
+		block.SignedHeader.Header.NextAggregatorsHash = m.getNextAggregatorsHash()
+
 		commit, err = m.getCommit(block.SignedHeader.Header)
 		if err != nil {
 			return err
@@ -742,6 +745,12 @@ func (m *Manager) getLastStateValidators() *cmtypes.ValidatorSet {
 	m.lastStateMtx.RLock()
 	defer m.lastStateMtx.RUnlock()
 	return m.lastState.Validators
+}
+
+func (m *Manager) getNextAggregatorsHash() types.Hash {
+	m.lastStateMtx.RLock()
+	defer m.lastStateMtx.RUnlock()
+	return m.lastState.NextValidators.Hash()
 }
 
 func (m *Manager) getLastBlockTime() time.Time {
